@@ -127,6 +127,7 @@ fn ascii_object_bitfield() {
         assert_eq!(o.kind(), 0);
         assert_eq!(o.compact(), 0);
         assert_eq!(o.ascii(), 0);
+        #[cfg(not(Py_3_12))]
         assert_eq!(o.ready(), 0);
 
         for i in 0..4 {
@@ -145,8 +146,11 @@ fn ascii_object_bitfield() {
         o.state = 1 << 6;
         assert_eq!(o.ascii(), 1);
 
-        o.state = 1 << 7;
-        assert_eq!(o.ready(), 1);
+        #[cfg(not(Py_3_12))]
+        {
+            o.state = 1 << 7;
+            assert_eq!(o.ready(), 1);
+        }
     }
 }
 
@@ -167,6 +171,7 @@ fn ascii() {
             assert_eq!(ascii.kind(), PyUnicode_1BYTE_KIND);
             assert_eq!(ascii.compact(), 1);
             assert_eq!(ascii.ascii(), 1);
+            #[cfg(not(Py_3_12))]
             assert_eq!(ascii.ready(), 1);
 
             assert_eq!(PyUnicode_IS_ASCII(ptr), 1);
@@ -208,6 +213,7 @@ fn ucs4() {
             assert_eq!(ascii.kind(), PyUnicode_4BYTE_KIND);
             assert_eq!(ascii.compact(), 1);
             assert_eq!(ascii.ascii(), 0);
+            #[cfg(not(Py_3_12))]
             assert_eq!(ascii.ready(), 1);
 
             assert_eq!(PyUnicode_IS_ASCII(ptr), 0);

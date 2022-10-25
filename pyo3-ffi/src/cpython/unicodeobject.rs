@@ -48,6 +48,7 @@ pub struct PyASCIIObject {
     /// unsigned int ready:1;
     /// unsigned int :24;
     pub state: u32,
+    #[cfg(not(Py_3_12))]
     pub wstr: *mut wchar_t,
 }
 
@@ -77,6 +78,7 @@ impl PyASCIIObject {
         (self.state >> 6) & 1
     }
 
+    #[cfg(not(Py_3_12))]
     #[inline]
     pub unsafe fn ready(&self) -> c_uint {
         (self.state >> 7) & 1
@@ -88,6 +90,7 @@ pub struct PyCompactUnicodeObject {
     pub _base: PyASCIIObject,
     pub utf8_length: Py_ssize_t,
     pub utf8: *mut c_char,
+    #[cfg(not(Py_3_12))]
     pub wstr_length: Py_ssize_t,
 }
 
@@ -123,6 +126,7 @@ pub const SSTATE_INTERNED_IMMORTAL: c_uint = 2;
 #[cfg(target_endian = "little")]
 pub unsafe fn PyUnicode_IS_ASCII(op: *mut PyObject) -> c_uint {
     debug_assert!(crate::PyUnicode_Check(op) != 0);
+    #[cfg(not(Py_3_12))]
     debug_assert!(PyUnicode_IS_READY(op) != 0);
 
     (*(op as *mut PyASCIIObject)).ascii()
@@ -141,7 +145,7 @@ pub unsafe fn PyUnicode_IS_COMPACT_ASCII(op: *mut PyObject) -> c_uint {
 }
 
 #[cfg(not(Py_3_12))]
-#[cfg_attr(Py_3_10, deprecated(note = "Python 3.10"))]
+#[deprecated(note = "Removed in Python 3.12")]
 pub const PyUnicode_WCHAR_KIND: c_uint = 0;
 
 pub const PyUnicode_1BYTE_KIND: c_uint = 1;
@@ -170,6 +174,7 @@ pub unsafe fn PyUnicode_4BYTE_DATA(op: *mut PyObject) -> *mut Py_UCS4 {
 #[cfg(target_endian = "little")]
 pub unsafe fn PyUnicode_KIND(op: *mut PyObject) -> c_uint {
     debug_assert!(crate::PyUnicode_Check(op) != 0);
+    #[cfg(not(Py_3_12))]
     debug_assert!(PyUnicode_IS_READY(op) != 0);
 
     (*(op as *mut PyASCIIObject)).kind()
@@ -213,24 +218,28 @@ pub unsafe fn PyUnicode_DATA(op: *mut PyObject) -> *mut c_void {
 #[cfg(target_endian = "little")]
 pub unsafe fn PyUnicode_GET_LENGTH(op: *mut PyObject) -> Py_ssize_t {
     debug_assert!(crate::PyUnicode_Check(op) != 0);
+    #[cfg(not(Py_3_12))]
     debug_assert!(PyUnicode_IS_READY(op) != 0);
 
     (*(op as *mut PyASCIIObject)).length
 }
 
 #[inline]
+#[cfg(not(Py_3_12))]
+#[deprecated(note = "Removed in Python 3.12")]
 #[cfg(target_endian = "little")]
 pub unsafe fn PyUnicode_IS_READY(op: *mut PyObject) -> c_uint {
     (*(op as *mut PyASCIIObject)).ready()
 }
 
 #[cfg(not(Py_3_12))]
-#[cfg_attr(Py_3_10, deprecated(note = "Python 3.10"))]
+#[deprecated(note = "Removed in Python 3.12")]
 #[inline]
 #[cfg(target_endian = "little")]
 pub unsafe fn PyUnicode_READY(op: *mut PyObject) -> c_int {
     debug_assert!(crate::PyUnicode_Check(op) != 0);
 
+    #[allow(deprecated)]
     if PyUnicode_IS_READY(op) != 0 {
         0
     } else {
