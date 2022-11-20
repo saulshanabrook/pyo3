@@ -359,7 +359,7 @@ After:
 use pyo3::prelude::*;
 
 #[pyclass]
-struct MyClass { }
+struct MyClass {}
 
 #[pymethods]
 impl MyClass {
@@ -581,7 +581,7 @@ There can be two fixes:
    #[pyclass]
    struct ThreadSafe {
        shared_bools: Arc<Mutex<Vec<bool>>>,
-       closure: Box<dyn Fn() + Send>
+       closure: Box<dyn Fn() + Send>,
    }
    ```
 
@@ -694,10 +694,10 @@ struct MyClass {}
 
 #[pymethods]
 impl MyClass {
-   #[new]
-   fn new() -> Self {
-       MyClass {}
-   }
+    #[new]
+    fn new() -> Self {
+        MyClass {}
+    }
 }
 ```
 
@@ -720,7 +720,7 @@ Here is an example.
 
 #[pyclass]
 struct Names {
-    names: Vec<String>
+    names: Vec<String>,
 }
 
 #[pymethods]

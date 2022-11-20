@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import time
 from glob import glob
 from pathlib import Path
@@ -229,6 +230,68 @@ def test_emscripten(session: nox.Session):
 @nox.session(name="build-guide", venv_backend="none")
 def build_guide(session: nox.Session):
     _run(session, "mdbook", "build", "-d", "../target/guide", "guide", *session.posargs)
+
+
+@nox.session(name="format-guide", venv_backend="none")
+def format_guide(session: nox.Session):
+    fence_re = re.compile(
+        "^(?P<prefix> *(?:> *)?)```rust\n(?P<content>.*?)((?P=prefix))```", re.M | re.S
+    )
+
+    def handle_file(filename):
+        with open(filename, "r") as file:
+            content = file.read()
+
+        new_content = []
+        while True:
+            # Find occurrences of fenced Rust code blocks
+            match = fence_re.search(content)
+            if not match:
+                break
+
+            new_content.append(content[: match.start("content")])
+
+            # Write the content of the block into a file, as a module doc comment
+            prefix = match["prefix"]
+            with tempfile.NamedTemporaryFile("w", delete=False) as file:
+                tempname = file.name
+                file.write("//! ```\n")
+                for line in match["content"].splitlines(True):
+                    file.write(("//! " + line[len(prefix) :]).rstrip() + "\n")
+                file.write("//! ```\n")
+
+            # Format the file (unfortunately we need nightly rustfmt)
+            _run(
+                session,
+                "rustfmt",
+                "+nightly",
+                "--config",
+                "format_code_in_doc_comments=true",
+                "--config",
+                "reorder_imports=false",
+                tempname,
+            )
+
+            # Read back the formatted code and remove the temp. file
+            with open(tempname, "r") as file:
+                for line in file:
+                    if line == "//! ```\n":
+                        continue
+                    new_content.append((prefix + line[4:]).rstrip() + "\n")
+            os.unlink(tempname)
+
+            new_content.append(content[match.start(3) : match.end()])
+
+            content = content[match.end() :]
+
+        new_content.append(content)
+        with open(filename, "w") as file:
+            file.write("".join(new_content))
+
+    for root, _, files in os.walk("guide"):
+        for filename in files:
+            if filename.endswith(".md"):
+                handle_file(os.path.join(root, filename))
 
 
 @nox.session(name="address-sanitizer", venv_backend="none")
